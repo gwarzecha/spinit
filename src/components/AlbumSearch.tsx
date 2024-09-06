@@ -19,10 +19,36 @@ const AlbumSearch = () => {
       }
 
       const data = await response.json();
-      const exactMatches = data.releases?.filter(
+      const exactAlbumMatches = data.releases?.filter(
         (release: any) => release.title.toLowerCase() === query.toLowerCase()
       );
-      setResults({ ...data, releases: exactMatches });
+
+      const uniqueArtists = new Set<string>();
+      console.log({ uniqueArtists });
+
+      const filteredReleases = exactAlbumMatches?.filter((release: any) => {
+        const albumArtists =
+          release['artist-credit']?.map((credit: any) => credit.name) || [];
+
+        // Check each artist and add to Set if not [unknown]
+        const validArtistNames = albumArtists
+          .filter((artist: string) => artist.toLowerCase() !== '[unknown]')
+          .map((artist: string) => artist.toLowerCase());
+
+        // Add the first valid artist to the Set
+        if (validArtistNames.length > 0) {
+          const artist = validArtistNames[0];
+          if (!uniqueArtists.has(artist)) {
+            uniqueArtists.add(artist);
+            return true;
+          }
+        }
+        return false;
+      });
+
+      console.log({ filteredReleases });
+
+      setResults({ ...data, releases: filteredReleases });
     } catch (error: unknown) {
       if (error instanceof Error) {
         setError(error.message);
@@ -38,7 +64,6 @@ const AlbumSearch = () => {
         type="text"
         value={query}
         onChange={(e) => {
-          console.log(e.target.value); // Debug log
           setQuery(e.target.value);
         }}
         style={{
@@ -58,10 +83,11 @@ const AlbumSearch = () => {
           <ul>
             {results.releases?.map((release: any) => (
               <li key={release.id}>
-                <strong>{release.title}</strong> by{' '}
+                <strong>{release.title || 'No artist info available'}</strong>{' '}
+                by{' '}
                 {release['artist-credit']
                   ?.map((credit: any) => credit.name)
-                  .join(', ')}
+                  .join(', ') || 'No artist info available'}{' '}
               </li>
             ))}
           </ul>
