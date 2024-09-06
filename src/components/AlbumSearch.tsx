@@ -19,13 +19,16 @@ const AlbumSearch = () => {
       }
 
       const data = await response.json();
+      // exactAlbumMatches is an array with release properties
       const exactAlbumMatches = data.releases?.filter(
         (release: any) => release.title.toLowerCase() === query.toLowerCase()
       );
 
-      const uniqueArtists = new Set<string>();
-      console.log({ uniqueArtists });
+      console.log({ exactAlbumMatches });
 
+      const uniqueArtists = new Set<string>();
+
+      // filteredReleases is also an array with release properties
       const filteredReleases = exactAlbumMatches?.filter((release: any) => {
         const albumArtists =
           release['artist-credit']?.map((credit: any) => credit.name) || [];
