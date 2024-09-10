@@ -3,10 +3,16 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  AlbumRelease,
+  SearchResults,
+  ResultsState,
+  ArtistCredit,
+} from '@/types/types';
 
 const AlbumSearch = () => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<ResultsState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
@@ -18,10 +24,11 @@ const AlbumSearch = () => {
         throw new Error('Failed to fetch album data');
       }
 
-      const data = await response.json();
+      const data: SearchResults = await response.json();
       // exactAlbumMatches is an array with release properties
       const exactAlbumMatches = data.releases?.filter(
-        (release: any) => release.title.toLowerCase() === query.toLowerCase()
+        (release: AlbumRelease) =>
+          release.title.toLowerCase() === query.toLowerCase()
       );
 
       console.log({ exactAlbumMatches });
@@ -29,25 +36,29 @@ const AlbumSearch = () => {
       const uniqueArtists = new Set<string>();
 
       // filteredReleases is also an array with release properties
-      const filteredReleases = exactAlbumMatches?.filter((release: any) => {
-        const albumArtists =
-          release['artist-credit']?.map((credit: any) => credit.name) || [];
+      const filteredReleases = exactAlbumMatches?.filter(
+        (release: AlbumRelease) => {
+          const albumArtists =
+            release['artist-credit']?.map(
+              (credit: ArtistCredit) => credit.name
+            ) || [];
 
-        // Check each artist and add to Set if not [unknown]
-        const validArtistNames = albumArtists
-          .filter((artist: string) => artist.toLowerCase() !== '[unknown]')
-          .map((artist: string) => artist.toLowerCase());
+          // Check each artist and add to Set if not [unknown]
+          const validArtistNames = albumArtists
+            .filter((artist: string) => artist.toLowerCase() !== '[unknown]')
+            .map((artist: string) => artist.toLowerCase());
 
-        // Add the first valid artist to the Set
-        if (validArtistNames.length > 0) {
-          const artist = validArtistNames[0];
-          if (!uniqueArtists.has(artist)) {
-            uniqueArtists.add(artist);
-            return true;
+          // Add the first valid artist to the Set
+          if (validArtistNames.length > 0) {
+            const artist = validArtistNames[0];
+            if (!uniqueArtists.has(artist)) {
+              uniqueArtists.add(artist);
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      });
+      );
 
       console.log({ filteredReleases });
 
@@ -84,12 +95,12 @@ const AlbumSearch = () => {
         <div>
           <h2>Search Results:</h2>
           <ul>
-            {results.releases?.map((release: any) => (
+            {results.releases?.map((release: AlbumRelease) => (
               <li key={release.id}>
                 <strong>{release.title || 'No artist info available'}</strong>{' '}
                 by{' '}
                 {release['artist-credit']
-                  ?.map((credit: any) => credit.name)
+                  ?.map((credit: ArtistCredit) => credit.name)
                   .join(', ') || 'No artist info available'}{' '}
               </li>
             ))}
